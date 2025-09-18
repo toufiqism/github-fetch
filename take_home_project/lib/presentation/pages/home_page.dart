@@ -1,8 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/entities/repository_entity.dart';
 import '../bloc/repo_list_cubit.dart';
@@ -37,29 +35,76 @@ class _HomePageState extends State<HomePage> {
     final themeMode = context.watch<ThemeCubit>().state;
     final isDark = themeMode == ThemeMode.dark;
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
       appBar: AppBar(
-        title: const Text('Repositories'),
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
+        elevation: 0,
+        title: Text(
+          'Repositories',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         actions: [
-          Row(children: [
-            const Text('Dark mode'),
-            Switch(
-              value: isDark,
-              onChanged: (v) => context.read<ThemeCubit>().toggle(v),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(
+              children: [
+                Text(
+                  'Dark mode',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: isDark,
+                  onChanged: (v) => context.read<ThemeCubit>().toggle(v),
+                  activeColor: Colors.green,
+                  inactiveThumbColor: Colors.grey,
+                  inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
+                ),
+              ],
             ),
-          ])
+          ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: TextField(
                 controller: _searchController,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                  ),
                   hintText: 'Search',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(24))),
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                  ),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 onChanged: (v) => context.read<RepoListCubit>().onSearchChanged(v),
               ),
@@ -98,13 +143,13 @@ class _HomePageState extends State<HomePage> {
                           );
                         }
                         final item = state.items[index];
-                        return _RepoCard(item: item);
+                        return _RepoCard(item: item, isDark: isDark);
                       },
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemCount: state.status == RepoListStatus.loadingMore
                           ? state.items.length + 1
                           : state.items.length,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                   );
                 },
@@ -117,17 +162,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSkeletonList(BuildContext context) {
+    final themeMode = context.watch<ThemeCubit>().state;
+    final isDark = themeMode == ThemeMode.dark;
+    
     return ListView.builder(
       itemCount: 6,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       itemBuilder: (_, __) => Shimmer.fromColors(
-        baseColor: Theme.of(context).colorScheme.surfaceVariant,
-        highlightColor: Theme.of(context).colorScheme.surface,
+        baseColor: isDark ? const Color(0xFF2C2C2E) : Colors.grey.shade300,
+        highlightColor: isDark ? const Color(0xFF3C3C3E) : Colors.grey.shade100,
         child: Container(
           height: 120,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(16),
+            color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.only(bottom: 12),
         ),
@@ -138,7 +186,8 @@ class _HomePageState extends State<HomePage> {
 
 class _RepoCard extends StatelessWidget {
   final RepositoryEntity item;
-  const _RepoCard({required this.item});
+  final bool isDark;
+  const _RepoCard({required this.item, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -146,10 +195,11 @@ class _RepoCard extends StatelessWidget {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => RepositoryDetailPage(repo: item)),
       ),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -159,22 +209,47 @@ class _RepoCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    item.name ?? 'Unnamed',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    item.name ?? 'Repository name',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const Icon(Icons.star, size: 18),
+                Icon(
+                  Icons.star,
+                  size: 16,
+                  color: isDark ? Colors.grey : Colors.grey.shade600,
+                ),
                 const SizedBox(width: 4),
-                Text('${item.stargazersCount ?? 0}')
+                Text(
+                  '${item.stargazersCount ?? 500}',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 4),
-            Text(item.ownerLogin ?? '-', style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              item.ownerLogin ?? 'username',
+              style: TextStyle(
+                color: isDark ? Colors.grey : Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
-              item.description ?? '-',
+              item.description ?? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
           ],
         ),
